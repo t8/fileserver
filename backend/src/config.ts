@@ -13,7 +13,7 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 }
 
 export const config = {
-  port: parseInt(process.env.PORT || '3000', 10),
+  port: parseInt(process.env.PORT || '1763', 10),
   uploadDir: UPLOAD_DIR,
   dbPath: DB_PATH,
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10737418240', 10), // 10GB default

@@ -287,5 +287,41 @@ router.patch('/move/:id', requireAuth, (req: AuthRequest, res: Response) => {
   }
 });
 
+// Get total storage statistics
+router.get('/stats', requireAuth, (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDatabase();
+    
+    // Get total size from all files
+    const filesResult = db.prepare('SELECT SUM(file_size) as total FROM files').get() as {
+      total: number | null;
+    };
+    
+    // Get total size from all file versions
+    const versionsResult = db.prepare('SELECT SUM(file_size) as total FROM file_versions').get() as {
+      total: number | null;
+    };
+    
+    const filesTotal = filesResult.total || 0;
+    const versionsTotal = versionsResult.total || 0;
+    const totalStorage = filesTotal + versionsTotal;
+    
+    // Get file count
+    const fileCountResult = db.prepare('SELECT COUNT(*) as count FROM files').get() as {
+      count: number;
+    };
+    
+    res.json({
+      totalStorage,
+      filesTotal,
+      versionsTotal,
+      fileCount: fileCountResult.count,
+    });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
 

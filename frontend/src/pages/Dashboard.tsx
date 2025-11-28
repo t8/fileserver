@@ -8,6 +8,7 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import CreateFolder from '../components/CreateFolder';
 import MoveFileDialog from '../components/MoveFileDialog';
 import VersionHistory from '../components/VersionHistory';
+import StorageIndicator from '../components/StorageIndicator';
 import api from '../services/api';
 
 export interface Folder {
@@ -107,7 +108,10 @@ export default function Dashboard() {
     setSearchQuery(''); // Clear search when navigating
   };
 
+  const [storageKey, setStorageKey] = useState(0);
+
   const handleUploadSuccess = () => {
+    setStorageKey(prev => prev + 1); // Trigger storage refresh
     if (searchQuery.trim()) {
       loadFiles(searchQuery);
     } else {
@@ -132,6 +136,7 @@ export default function Dashboard() {
   };
 
   const handleMoveSuccess = () => {
+    setStorageKey(prev => prev + 1); // Trigger storage refresh
     if (searchQuery.trim()) {
       loadFiles(searchQuery);
     } else {
@@ -140,6 +145,7 @@ export default function Dashboard() {
   };
 
   const handleVersionRestored = () => {
+    setStorageKey(prev => prev + 1); // Trigger storage refresh
     if (searchQuery.trim()) {
       loadFiles(searchQuery);
     } else {
@@ -157,6 +163,7 @@ export default function Dashboard() {
       <header className="dashboard-header">
         <h1>File Server</h1>
         <div className="header-actions">
+          <StorageIndicator refreshTrigger={storageKey} />
           <span className="username">Welcome, {user?.username}</span>
           <button onClick={handleLogout} className="logout-button">
             Logout
