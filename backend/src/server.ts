@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import multer from 'multer';
 import { config } from './config';
 import { getDatabase, closeDatabase } from './db/database';
@@ -32,6 +33,57 @@ app.get('/api/health', (req, res) => {
 
 // Serve uploaded files statically (optional, for direct access)
 app.use('/uploads', express.static(config.uploadDir));
+
+// Serve frontend static files in production
+// Try multiple possible paths for frontend dist
+const possiblePaths = [
+  path.join(process.cwd(), 'frontend', 'dist'), // Development/production from project root
+  path.join(__dirname, '..', '..', 'frontend', 'dist'), // Production from backend/dist
+  path.join(process.cwd(), '..', 'frontend', 'dist'), // Alternative path
+];
+
+let frontendDist: string | null = null;
+for (const distPath of possiblePaths) {
+  if (fs.existsSync(distPath) && fs.existsSync(path.join(distPath, 'index.html'))) {
+    frontendDist = distPath;
+    break;
+  }
+}
+
+if (frontendDist) {
+  console.log(`Serving frontend from: ${frontendDist}`);
+  
+  // Serve static assets (JS, CSS, images, etc.)
+  app.use(express.static(frontendDist, { index: false }));
+  
+  // Explicitly handle root route
+  app.get('/', (req, res) => {
+    res.sendFile(path.resolve(frontendDist!, 'index.html'));
+  });
+  
+  // Handle React Router - serve index.html for all non-API routes
+  app.get('*', (req, res, next) => {
+    // Skip API routes and uploads - let them fall through to 404 if not handled
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    // Serve index.html for all other routes (React Router will handle routing)
+    const indexPath = path.resolve(frontendDist!, 'index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error sending index.html:', err);
+        res.status(500).send('Error loading frontend');
+      }
+    });
+  });
+} else {
+  console.log('Frontend dist folder not found. API-only mode.');
+  console.log('Searched paths:', possiblePaths);
+  // In API-only mode, return 404 for root
+  app.get('/', (req, res) => {
+    res.status(404).json({ error: 'Frontend not found. Please build the frontend first.' });
+  });
+}
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
