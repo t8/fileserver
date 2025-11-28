@@ -58,12 +58,14 @@ router.post('/upload', requireAuth, upload.array('files', 10), (req: AuthRequest
     }
 
     for (const file of files) {
+      // Type assertion: we know files is an array of Express.Multer.File
+      const multerFile = file as Express.Multer.File;
       const fileInfo = {
-        filename: file.filename,
-        originalFilename: sanitizeFilename(file.originalname),
-        filePath: file.path,
-        fileSize: file.size,
-        mimeType: file.mimetype,
+        filename: multerFile.filename,
+        originalFilename: sanitizeFilename(multerFile.originalname),
+        filePath: multerFile.path,
+        fileSize: multerFile.size,
+        mimeType: multerFile.mimetype,
         uploadedBy: req.userId!,
         folderId,
       };

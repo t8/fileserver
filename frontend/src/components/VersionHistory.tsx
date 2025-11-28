@@ -19,7 +19,6 @@ interface VersionHistoryProps {
 
 export default function VersionHistory({ fileId, fileName, onClose, onVersionRestored }: VersionHistoryProps) {
   const [versions, setVersions] = useState<Version[]>([]);
-  const [currentVersion, setCurrentVersion] = useState<number>(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploadingVersion, setUploadingVersion] = useState(false);
@@ -34,7 +33,6 @@ export default function VersionHistory({ fileId, fileName, onClose, onVersionRes
       setLoading(true);
       const response = await api.get(`/versions/${fileId}`);
       setVersions(response.data.versions || []);
-      setCurrentVersion(response.data.currentVersion || 1);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to load versions');
     } finally {
